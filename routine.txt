@@ -1,0 +1,10 @@
+作業開始
+# 作業開始
+cd ~/kotoba-app      # プロジェクトに移動
+git pull             # 他の端末の変更を取得（習慣にする）
+npm run dev          # 開発サーバー起動（ブラウザで確認用）
+
+# 作業終了
+git add .
+git commit -m "今日やったことを一言で"
+git push

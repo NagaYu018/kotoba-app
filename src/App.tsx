@@ -1,121 +1,44 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+
+// 言葉の定義
+type Quote = {
+  id: number
+  text: string
+  source: string
+}
+
+// サンプルデータ（仮）
+const quotes: Quote[] = [
+  { id: 1, text: '少しくらいは僕らを捌いたっていいじゃないですか', source: 'ヨルシカ 強盗と花束'},
+  { id: 2, text: '神様だって作品なんだから', source: 'ヨルシカ レプリカント'},
+  { id: 3, text: '僕は愛を，底が抜けた柄杓で呑んでる', source: 'ヨルシカ 嘘月'}
+]
 
 function App() {
-  const [count, setCount] = useState(0)
+  //現在表示している言葉の番号（最初は０番目）
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  //今表示する言葉
+  const currentQuote = quotes[currentIndex]
+
+  //ランダムで次の言葉に切り替える（今表示されているものは除く）
+  const handleRandom = () => {
+    //現在のインデックスを除いた候補リストを作る
+    const candidates = quotes
+    .map((_, index) => index)
+    .filter((index) => index !== currentIndex)
+
+    //候補の中からランダムに選ぶ
+    const randomIndex = candidates[Math.floor(Math.random() * candidates.length)]
+    setCurrentIndex(randomIndex)
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <div className="app">
+      <p>{currentQuote.text}</p>
+      <p>{currentQuote.source}</p>
+      <button onClick={handleRandom}>ランダム</button>
+    </div>
   )
 }
 
