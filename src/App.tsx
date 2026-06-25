@@ -15,6 +15,7 @@ type TextStyle = {
 }
 //背景
 type Background = {
+  //将来的に画像を扱う場合に備えた拡張性
   type: 'color'
   value: string //例：'#1a2a4a'
 }
@@ -60,7 +61,8 @@ const initialQuotes: Quote[] = [
       },
     },
   },
-  { id: 2, 
+  { 
+    id: 2, 
     text: '神様だって作品なんだから', 
     source: 'ヨルシカ レプリカント',
     background: {type: 'color', value: '#2a1a3a'},
@@ -110,6 +112,7 @@ const initialQuotes: Quote[] = [
 
 function App() {
   //現在表示している言葉の番号（最初は０番目）
+  //const [a, b]aという変数をbという関数で変更
   const [currentIndex, setCurrentIndex] = useState(0)
   const [quotes, setQuotes] = useState<Quote[]>(initialQuotes)
 
