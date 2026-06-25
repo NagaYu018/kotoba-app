@@ -112,13 +112,13 @@ const initialQuotes: Quote[] = [
 
 function App() {
   //現在表示している言葉の番号（最初は０番目）
-  //const [a, b]aという変数をbという関数で変更
+  //usestate > Reactが再描画してくれる
   const [currentIndex, setCurrentIndex] = useState(0)
   const [quotes, setQuotes] = useState<Quote[]>(initialQuotes)
 
   //今表示する言葉
   const currentQuote = quotes[currentIndex]
-
+ //引数：どの軸を変えるか(axis)，どんな値に変えるか(value)
   const handleTextPositionChange = (axis: 'x' | 'y', value: number) => {
     setQuotes((prevQuotes) => 
       prevQuotes.map((quote, index) => {
@@ -126,12 +126,12 @@ function App() {
           return quote
         }
         return {
-          ...quote,
-          textLayout: {
-            ...quote.textLayout,
-            position: {
-              ...quote.textLayout.position,
-              [axis]: value,
+          ...quote,  //quoteの中身を全部コピー
+          textLayout: { //textLayoutだけ新しく上書き
+            ...quote.textLayout, //textLayoutの中身を全部コピー
+            position: {          //positionだけ新しく上書き
+              ...quote.textLayout.position, //psitionの中身を全部コピー
+              [axis]: value, //x or y を上書き
             },
           },
         }
@@ -146,6 +146,7 @@ function App() {
     .filter((index) => index !== currentIndex)
 
     //候補の中からランダムに選ぶ
+    //math.floor > 小数点切り捨て
     const randomIndex = candidates[Math.floor(Math.random() * candidates.length)]
     setCurrentIndex(randomIndex)
   }
