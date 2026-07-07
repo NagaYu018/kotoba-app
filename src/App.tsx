@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import './App.css'
 
 //textの位置
@@ -114,6 +114,10 @@ function App() {
   //現在表示している言葉の番号（最初は０番目）
   //usestate > Reactが再描画してくれる
   const [currentIndex, setCurrentIndex] = useState(0)
+  //画面上の要素の位置やサイズを取得
+  const  containerRef = useRef<HTMLDivElement>(null)
+  //ドラッグの開始の有無を管理
+  const isDragging = useRef(false)
   const [quotes, setQuotes] = useState<Quote[]>(initialQuotes)
 
   //今表示する言葉
@@ -138,6 +142,29 @@ function App() {
       })
     )
   }
+
+  //ドラッグ処理
+  const handlePointerDown = () => {
+    isDragging.current = true
+  }
+
+  //ドラッグ中
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return
+    if (!containerRef.current) return
+
+    const rect = containerRef.current.getBoundingClientRect()
+    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100)
+    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100)
+
+    handleTextPositionChange('x', Math.max(0, Math.min(100, x)))
+    handleTextPositionChange('y', Math.max(0, Math.min(100, y)))
+  }
+
+  //ドラッグ終了
+  const handlePointerUp = () => {
+    isDragging.current = false
+  } 
   //ランダムで次の言葉に切り替える（今表示されているものは除く）
   const handleRandom = () => {
     //現在のインデックスを除いた候補リストを作る
@@ -210,6 +237,7 @@ function App() {
             min={0}
             max={100}
             value={currentQuote.textLayout.position.y}
+            //変数名eは特に指定はなくonClick, onChange等により構造体の中身が変わる
             onChange={(e) =>
               handleTextPositionChange('y', Number(e.target.value))
             }
