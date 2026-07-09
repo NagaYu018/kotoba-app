@@ -147,6 +147,9 @@ function App() {
   //ドラッグの開始の有無を管理
   const draggingTarget = useRef<'textLayout' | 'sourceLayout' | null>(null)
   const [quotes, setQuotes] = useState<Quote[]>(initialQuotes)
+  const [activeTarget, setActiveTarget] = useState<'textLayout' | 'sourceLayout' | null>(null)
+  //指と言葉の中心のズレを記憶
+  const dragOffset = useRef({ x: 0, y: 0 })
 
   //今表示する言葉
   const currentQuote = quotes[currentIndex]
@@ -175,8 +178,26 @@ function App() {
   }
 
   //ドラッグ処理
-  const handlePointerDown = (target: 'textLayout' | 'sourceLayout') => {
+  const handlePointerDown = (
+    target: 'textLayout' | 'sourceLayout',
+    e: React.PointerEvent<HTMLParagraphElement>
+  ) => {
+    e.stopPropagation()
+    if(!containerRef.current) return
+
+    const rect = containerRef.current.getBoundingClientRect()
+    const pointerX = ((e.clientX - rect.left) / rect.width) * 100
+    const pointerY = ((e.clientY - rect.top) / rect.height) * 100
+
+    const currentPosition = currentQuote[target].position
+
+    dragOffset.current = {
+      x: currentPosition.x - pointerX,
+      y: currentPosition.y - pointerY,
+    }
+    
     draggingTarget.current = target
+    setActiveTarget(target)
   }
 
   //ドラッグ中
@@ -185,8 +206,11 @@ function App() {
     if (!containerRef.current) return
 
     const rect = containerRef.current.getBoundingClientRect()
-    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100)
-    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100)
+    const pointerX = ((e.clientX - rect.left) / rect.width) * 100
+    const pointerY = ((e.clientY - rect.top) / rect.height) * 100
+
+    const x = Math.round(pointerX + dragOffset.current.x)
+    const y = Math.round(pointerY + dragOffset.current.y)
 
     handleTextPositionChange(draggingTarget.current, 'x', Math.max(0, Math.min(100, x)))
     handleTextPositionChange(draggingTarget.current, 'y', Math.max(0, Math.min(100, y)))
@@ -215,12 +239,13 @@ function App() {
         ref={containerRef}
         className="app"
         style={{ backgroundColor: currentQuote.background.value }}
+        onPointerDown={() => setActiveTarget(null)}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
         <p
-        className="quote-text"
-        onPointerDown={() => handlePointerDown('textLayout')}
+        className={`quote-text ${activeTarget === 'textLayout' ? 'selected' : ''}`}
+        onPointerDown={(e) => handlePointerDown('textLayout', e)}
         style={{
           left: `${currentQuote.textLayout.position.x}%`,
           top: `${currentQuote.textLayout.position.y}%`,
@@ -237,8 +262,8 @@ function App() {
           {currentQuote.text}
         </p>
         <p
-        className="source-text"
-        onPointerDown={() => handlePointerDown('sourceLayout')}
+        className={`source-text ${activeTarget === 'sourceLayout' ? 'selected' : ''}`}
+        onPointerDown={(e) => handlePointerDown('sourceLayout', e)}
         style={{
           left: `${currentQuote.sourceLayout.position.x}%`,
           top: `${currentQuote.sourceLayout.position.y}%`,

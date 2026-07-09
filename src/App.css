@@ -9,17 +9,23 @@
 .quote-text {
   position: absolute;
   transform: translate(-50%, -50%);
-  color: white;
-  font-size: 24px;
-  text-align:center;
-  width: 80%;
+  width: auto;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .source-text {
   position: absolute;
   transform: translate(-50%, -50%);
   text-align: center;
-  width: 80%;
+  width: auto;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.selected {
+  outline: 2px dashed white;
+  outline-offset: 4px;
 }
 
 .random-button {

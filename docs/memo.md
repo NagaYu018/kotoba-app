@@ -20,3 +20,13 @@ rect
 ├── top    → 要素の上端が画面上から何pxか
 ├── width  → 要素の横幅（px）
 └── height → 要素の縦幅（px）
+
+quote-textをタップする
+↓
+① quote-textのonPointerDownが発火する → activeTarget = 'textLayout'
+↓
+② イベントが「親要素」にも伝わっていく(バブリング)
+↓
+③ .appのonPointerDownも発火してしまう → activeTarget = null
+↓
+結果：選択されたと思ったら、すぐにnullに戻ってしまう
