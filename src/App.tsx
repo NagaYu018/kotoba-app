@@ -8,10 +8,14 @@ type TextPosition = {
 }
 //文字形式
 type TextStyle = {
-  fontFamily: string
+  fontFamily: string 
   fontSize: number
   fontWeight: number
   color: string
+  fontStyle: 'normal' | 'italic'          //斜体
+  lineHeight: number                      //行間
+  textAlign: 'left' | 'center' | 'right'  //配置
+  letterSpacing: number                   //文字間隔
 }
 //背景
 type Background = {
@@ -49,6 +53,10 @@ const initialQuotes: Quote[] = [
         fontSize: 24,
         fontWeight: 400,
         color: '#ffffff',
+        fontStyle: 'normal',
+        lineHeight: 1.6,
+        textAlign: 'center',
+        letterSpacing: 0,
       },
     },
     sourceLayout: {
@@ -58,6 +66,10 @@ const initialQuotes: Quote[] = [
         fontSize: 14,
         fontWeight: 300,
         color: '#cccccc',
+        fontStyle: 'italic',
+        lineHeight: 1.4,
+        textAlign: 'center',
+        letterSpacing: 1,
       },
     },
   },
@@ -73,6 +85,10 @@ const initialQuotes: Quote[] = [
         fontSize: 28,
         fontWeight: 700,
         color: '#f0e6ff',
+        fontStyle: 'italic',
+        lineHeight: 1.4,
+        textAlign: 'center',
+        letterSpacing: 1,
       },
     },
     sourceLayout: {
@@ -82,6 +98,10 @@ const initialQuotes: Quote[] = [
         fontSize: 18,
         fontWeight: 600,
         color: '#cccccc',
+        fontStyle: 'italic',
+        lineHeight: 1.4,
+        textAlign: 'center',
+        letterSpacing: 1,
       },
     },
   },
@@ -96,6 +116,10 @@ const initialQuotes: Quote[] = [
         fontSize: 24,
         fontWeight: 400,
         color: '#ffffff',
+        fontStyle: 'normal',
+        lineHeight: 1.4,
+        textAlign: 'right',
+        letterSpacing: 1.5,
       },
     },
     sourceLayout: {
@@ -105,6 +129,10 @@ const initialQuotes: Quote[] = [
         fontSize: 14,
         fontWeight: 200,
         color: '#cccccc',
+        fontStyle: 'normal',
+        lineHeight: 1.4,
+        textAlign: 'right',
+        letterSpacing: 1.5,
       },
     },
   },
@@ -117,13 +145,16 @@ function App() {
   //画面上の要素の位置やサイズを取得
   const  containerRef = useRef<HTMLDivElement>(null)
   //ドラッグの開始の有無を管理
-  const isDragging = useRef(false)
+  const draggingTarget = useRef<'textLayout' | 'sourceLayout' | null>(null)
   const [quotes, setQuotes] = useState<Quote[]>(initialQuotes)
 
   //今表示する言葉
   const currentQuote = quotes[currentIndex]
  //引数：どの軸を変えるか(axis)，どんな値に変えるか(value)
-  const handleTextPositionChange = (axis: 'x' | 'y', value: number) => {
+  const handleTextPositionChange = (
+    target: 'textLayout' | 'sourceLayout',
+    axis: 'x' | 'y', 
+    value: number) => {
     setQuotes((prevQuotes) => 
       prevQuotes.map((quote, index) => {
         if (index !== currentIndex) {
@@ -131,10 +162,10 @@ function App() {
         }
         return {
           ...quote,  //quoteの中身を全部コピー
-          textLayout: { //textLayoutだけ新しく上書き
-            ...quote.textLayout, //textLayoutの中身を全部コピー
+          [target]: { //textLayoutだけ新しく上書き
+            ...quote[target], //text or sourceの中身を全部コピー
             position: {          //positionだけ新しく上書き
-              ...quote.textLayout.position, //psitionの中身を全部コピー
+              ...quote[target].position, //psitionの中身を全部コピー
               [axis]: value, //x or y を上書き
             },
           },
@@ -144,26 +175,26 @@ function App() {
   }
 
   //ドラッグ処理
-  const handlePointerDown = () => {
-    isDragging.current = true
+  const handlePointerDown = (target: 'textLayout' | 'sourceLayout') => {
+    draggingTarget.current = target
   }
 
   //ドラッグ中
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging.current) return
+    if (!draggingTarget.current) return
     if (!containerRef.current) return
 
     const rect = containerRef.current.getBoundingClientRect()
     const x = Math.round(((e.clientX - rect.left) / rect.width) * 100)
     const y = Math.round(((e.clientY - rect.top) / rect.height) * 100)
 
-    handleTextPositionChange('x', Math.max(0, Math.min(100, x)))
-    handleTextPositionChange('y', Math.max(0, Math.min(100, y)))
+    handleTextPositionChange(draggingTarget.current, 'x', Math.max(0, Math.min(100, x)))
+    handleTextPositionChange(draggingTarget.current, 'y', Math.max(0, Math.min(100, y)))
   }
 
   //ドラッグ終了
   const handlePointerUp = () => {
-    isDragging.current = false
+    draggingTarget.current = null 
   } 
   //ランダムで次の言葉に切り替える（今表示されているものは除く）
   const handleRandom = () => {
@@ -181,11 +212,15 @@ function App() {
   return (
     <>
       <div 
+        ref={containerRef}
         className="app"
         style={{ backgroundColor: currentQuote.background.value }}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
       >
         <p
         className="quote-text"
+        onPointerDown={() => handlePointerDown('textLayout')}
         style={{
           left: `${currentQuote.textLayout.position.x}%`,
           top: `${currentQuote.textLayout.position.y}%`,
@@ -193,12 +228,17 @@ function App() {
           fontSize: `${currentQuote.textLayout.style.fontSize}px`,
           fontWeight: currentQuote.textLayout.style.fontWeight,
           color: currentQuote.textLayout.style.color,
+          fontStyle: currentQuote.textLayout.style.fontStyle,
+          lineHeight: currentQuote.textLayout.style.lineHeight,
+          textAlign: currentQuote.textLayout.style.textAlign,
+          letterSpacing: `${currentQuote.textLayout.style.letterSpacing}px`,
           }}
         >
           {currentQuote.text}
         </p>
         <p
         className="source-text"
+        onPointerDown={() => handlePointerDown('sourceLayout')}
         style={{
           left: `${currentQuote.sourceLayout.position.x}%`,
           top: `${currentQuote.sourceLayout.position.y}%`,
@@ -206,6 +246,10 @@ function App() {
           fontSize: `${currentQuote.sourceLayout.style.fontSize}px`,
           fontWeight: currentQuote.sourceLayout.style.fontWeight,
           color: currentQuote.sourceLayout.style.color,
+          fontStyle: currentQuote.sourceLayout.style.fontStyle,
+          lineHeight: currentQuote.sourceLayout.style.lineHeight,
+          textAlign: currentQuote.sourceLayout.style.textAlign,
+          letterSpacing: `${currentQuote.sourceLayout.style.letterSpacing}px`,
         }}
         >
           {currentQuote.source}
@@ -226,7 +270,7 @@ function App() {
             max={100}
             value={currentQuote.textLayout.position.x}
             onChange={(e) =>
-              handleTextPositionChange('x', Number(e.target.value))
+              handleTextPositionChange('textLayout', 'x', Number(e.target.value))
             }
           />  
         </label>
@@ -239,7 +283,7 @@ function App() {
             value={currentQuote.textLayout.position.y}
             //変数名eは特に指定はなくonClick, onChange等により構造体の中身が変わる
             onChange={(e) =>
-              handleTextPositionChange('y', Number(e.target.value))
+              handleTextPositionChange('textLayout','y', Number(e.target.value))
             }
           />
         </label>
