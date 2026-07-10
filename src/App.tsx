@@ -18,11 +18,11 @@ type TextStyle = {
   letterSpacing: number                   //文字間隔
 }
 //背景
-type Background = {
+type Background = 
   //将来的に画像を扱う場合に備えた拡張性
   | {type: 'color'; value: string }
   | {type:'image'; url:string } //例：'#1a2a4a'
-}
+
 //テキスト情報まとめ
 type TextElement = {
   position: TextPosition
@@ -177,6 +177,33 @@ function App() {
     )
   }
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    const reader = new FileReader()
+    reader.onload = () => {　//読み込みが終わったら，ここが呼ばれる
+      const imageUrl = reader.result as string
+      //ここでImageUrlをstateに保存する処理を書く
+      handleBackgroundImageChange(imageUrl)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleBackgroundImageChange = (imageUrl: string) => {
+    setQuotes((prevQuotes) =>
+      prevQuotes.map((quote, index) => {
+        if (index !== currentIndex){
+          return quote
+        }
+        return {
+          ...quote,
+          background: { type: 'image', url: imageUrl },
+        }
+      })
+    )
+  }
+
   //ドラッグ処理
   const handlePointerDown = (
     target: 'textLayout' | 'sourceLayout',
@@ -238,7 +265,18 @@ function App() {
       <div 
         ref={containerRef}
         className="app"
-        style={{ backgroundColor: currentQuote.background.value }}
+        style={{ 
+          backgroundColor: 
+            currentQuote.background.type === 'color'
+              ? currentIndex.value
+              : undefined,
+          backgroundImage:
+            currentQuote.background.type === 'image'
+              ? `url(${currentQuote.background.url})`
+              : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
         onPointerDown={() => setActiveTarget(null)}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -287,6 +325,12 @@ function App() {
       <div
         className="editor-controls"
       >
+        <label>
+          背景画像:
+          <input 
+            type="file" accept="image/*" onChange={handleImageUpload} 
+          />
+        </label>
         <label>
           X: {currentQuote.textLayout.position.x}
           <input
