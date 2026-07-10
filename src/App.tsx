@@ -29,6 +29,16 @@ type TextElement = {
   style: TextStyle
 }
 
+//追加画像の情報
+type OverlayImage = {
+  id: number
+  url: string
+  position: TextPosition  //位置
+  size: number            //大きさ
+  opacity: number         //透明度
+  zIndex: number          //重なり順
+}
+
 // 言葉の定義
 type Quote = {
   id: number
@@ -37,6 +47,7 @@ type Quote = {
   background: Background
   textLayout: TextElement
   sourceLayout: TextElement
+  overlayImages: OverlayImage[]
 }
 
 // サンプルデータ（仮）
@@ -72,6 +83,7 @@ const initialQuotes: Quote[] = [
         letterSpacing: 1,
       },
     },
+    overlayImages: [],
   },
   { 
     id: 2, 
@@ -104,6 +116,7 @@ const initialQuotes: Quote[] = [
         letterSpacing: 1,
       },
     },
+    overlayImages: [],
   },
   { id: 3, 
     text: '僕は愛を，底が抜けた柄杓で呑んでる', 
@@ -135,6 +148,7 @@ const initialQuotes: Quote[] = [
         letterSpacing: 1.5,
       },
     },
+    overlayImages: [],
   },
 ]
 
@@ -145,9 +159,9 @@ function App() {
   //画面上の要素の位置やサイズを取得
   const  containerRef = useRef<HTMLDivElement>(null)
   //ドラッグの開始の有無を管理
-  const draggingTarget = useRef<'textLayout' | 'sourceLayout' | null>(null)
+  const draggingTarget = useRef<'textLayout' | 'sourceLayout' | { type: 'overlay'; id: number } | null>(null)
   const [quotes, setQuotes] = useState<Quote[]>(initialQuotes)
-  const [activeTarget, setActiveTarget] = useState<'textLayout' | 'sourceLayout' | null>(null)
+  const [activeTarget, setActiveTarget] = useState<'textLayout' | 'sourceLayout' | { type: 'overlay' ; id: number } | null>(null)
   //指と言葉の中心のズレを記憶
   const dragOffset = useRef({ x: 0, y: 0 })
 
@@ -204,10 +218,70 @@ function App() {
     )
   }
 
+  const handleAddOverlayImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const imageUrl = reader.result as string
+
+      const newImage: OverlayImage = {
+        id: Date.now(),
+        url: imageUrl,
+        position: { x: 50, y: 50 },
+        size: 30,
+        opacity: 1,
+        zIndex: 1,
+      }
+      
+      setQuotes((prevQuotes) =>
+        prevQuotes.map((quote, index) => {
+          if (index !== currentIndex) {
+            return quote
+          }
+          return {
+            ...quote,
+            overlayImages: [...quote.overlayImages, newImage]  //既存の配列に新しい要素を追加
+          }
+        })
+       )
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleImagePositionChange = (
+    imageId: number,
+    axis: 'x' | 'y',
+    value: number
+  ) => {
+    setQuotes((prevQuotes) => 
+      prevQuotes.map((quote, index) => {
+        if (index !== currentIndex) {
+          return quote
+        }
+        return {
+          ...quote,
+          overlayImages: quote.overlayImages.map((image) => {
+            if (image.id !== imageId) {
+              return image
+            }
+            return {
+              ...image,
+              position: {
+                ...image.position,
+                [axis]: value,
+              },
+            }
+          })
+        }
+      })
+  }
+
   //ドラッグ処理
   const handlePointerDown = (
-    target: 'textLayout' | 'sourceLayout',
-    e: React.PointerEvent<HTMLParagraphElement>
+    target: 'textLayout' | 'sourceLayout', | { type: 'overlay'; id: number }
+    e: React.PointerEvent
   ) => {
     e.stopPropagation()
     if(!containerRef.current) return
@@ -216,7 +290,15 @@ function App() {
     const pointerX = ((e.clientX - rect.left) / rect.width) * 100
     const pointerY = ((e.clientY - rect.top) / rect.height) * 100
 
-    const currentPosition = currentQuote[target].position
+    let currentPosition = TextPosition
+
+    if (target === 'textLayout' || target === 'sourceLayout') {
+      currentPosition = currentQuote[target].position
+    }else {
+      const image = currentQuote.overlayImages.find((img) => img.id === target.id)
+      if (!iamge) return
+        currentPosition = image.position
+    }
 
     dragOffset.current = {
       x: currentPosition.x - pointerX,
@@ -224,7 +306,7 @@ function App() {
     }
     
     draggingTarget.current = target
-    setActiveTarget(target)
+    setActiveTarget(target === 'textLayout' || target === 'sourceLayout' ? target : null)
   }
 
   //ドラッグ中
@@ -268,7 +350,7 @@ function App() {
         style={{ 
           backgroundColor: 
             currentQuote.background.type === 'color'
-              ? currentIndex.value
+              ? currentQuote.value
               : undefined,
           backgroundImage:
             currentQuote.background.type === 'image'
@@ -317,6 +399,21 @@ function App() {
         >
           {currentQuote.source}
         </p>
+        {currentQuote.overlayImages.map((image) => (
+           <img
+             key={image.id}
+             src={image.url}
+             style={{
+               position: 'absolute',
+               left: `${image.position.x}%`,
+               top: `${image.position.y}%`,
+               width: `${image.size}%`,
+               opacity: image.opacity,
+               zIndex: image.zIndex,
+               transform: 'translate(-50%, -50%)',
+             }}
+            />
+          ))}
         <button className="random-button" onClick={handleRandom}>
           ランダム
         </button>
@@ -329,6 +426,12 @@ function App() {
           背景画像:
           <input 
             type="file" accept="image/*" onChange={handleImageUpload} 
+          />
+        </label>
+        <label>
+          画像を追加:
+          <input 
+            type="file" accept="image/*" onChange={handleAddOverlayImage}
           />
         </label>
         <label>
