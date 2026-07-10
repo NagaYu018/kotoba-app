@@ -20,8 +20,8 @@ type TextStyle = {
 //背景
 type Background = {
   //将来的に画像を扱う場合に備えた拡張性
-  type: 'color'
-  value: string //例：'#1a2a4a'
+  | {type: 'color'; value: string }
+  | {type:'image'; url:string } //例：'#1a2a4a'
 }
 //テキスト情報まとめ
 type TextElement = {
